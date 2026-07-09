@@ -1,3 +1,9 @@
+# ---------- SQLite Patch for Streamlit Cloud Deployment ----------
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
+# ---------- Your Original Imports ----------
 import os
 import uuid
 import chromadb
