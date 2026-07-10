@@ -22,7 +22,7 @@ st.set_page_config(page_title="Python Book Chatbot", page_icon="✨")
 st.title("📚 Python Book Chatbot (RAG)")
 
 BOOKS_DIR, CHROMA_DIR, COLLECTION_NAME = "books", "chroma_db", "python_books"
-GROQ_API_KEY = os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 if not GROQ_API_KEY:
     st.error("⚠️ GROQ_API_KEY kidaikala. `.env` file-la config pannunga.")
