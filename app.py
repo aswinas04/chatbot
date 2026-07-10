@@ -22,26 +22,17 @@ st.set_page_config(page_title="Python Book Chatbot", page_icon="✨")
 st.title("📚 Python Book Chatbot (RAG)")
 
 BOOKS_DIR, CHROMA_DIR, COLLECTION_NAME = "books", "chroma_db", "python_books"
-
-# --- UPDATED: Fetch your secret Groq API key from Streamlit Cloud Secrets safely ---
-if "GROQ_API_KEY" in st.secrets:
-    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
-else:
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 if not GROQ_API_KEY:
-    st.error("⚠️ GROQ_API_KEY kidaikala. Streamlit Cloud Secrets or `.env` file-la config pannunga.")
+    st.error("⚠️ GROQ_API_KEY kidaikala. `.env` file-la config pannunga.")
     st.stop()
 
 # ---------- Core RAG Initialization ----------
 @st.cache_resource(show_spinner=False)
 def load_index():
-    # Set the embedding model configuration
     Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
-    
-    # --- UPDATED: Initialize Groq and force LlamaIndex to use it globally ---
-    llm_instance = Groq(model="llama-3.1-8b-instant", api_key=GROQ_API_KEY, temperature=0.3, max_tokens=2048)
-    Settings.llm = llm_instance
+    Settings.llm = Groq(model="llama-3.1-8b-instant", api_key=GROQ_API_KEY, temperature=0.3, max_tokens=2048)
     
     chroma_client = chromadb.PersistentClient(path=CHROMA_DIR)
     chroma_collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
