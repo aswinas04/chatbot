@@ -8,3 +8,4 @@ python-dotenvstreamlit
 llama-index-embeddings-huggingface
 pysqlite3-binary
 llama-index-llms-openai
+llama-index-core
