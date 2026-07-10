@@ -1,7 +1,16 @@
 # ---------- SQLite Patch for Streamlit Cloud Deployment ----------
-__import__('pysqlite3')
 import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
+try:
+    import sqlite3
+    # If the system's sqlite3 version is older than what ChromaDB needs (3.35.0+),
+    # swap it with pysqlite3 if available.
+    if sqlite3.sqlite_version_info < (3, 35, 0):
+        __import__('pysqlite3')
+        sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except (ImportError, KeyError):
+    # Fallback locally if pysqlite3 isn't installed but your native sqlite3 works fine
+    pass
 
 # ---------- Your Original Imports ----------
 import os
