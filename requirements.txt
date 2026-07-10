@@ -5,3 +5,4 @@ llama-index-llms-groq
 chromadb
 pysqlite3-binary
 python-dotenv
+llama-index-embeddings-huggingface
