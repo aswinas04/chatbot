@@ -3,13 +3,10 @@ import sys
 
 try:
     import sqlite3
-    # If the system's sqlite3 version is older than what ChromaDB needs (3.35.0+),
-    # swap it with pysqlite3 if available.
     if sqlite3.sqlite_version_info < (3, 35, 0):
         __import__('pysqlite3')
         sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 except (ImportError, KeyError):
-    # Fallback locally if pysqlite3 isn't installed but your native sqlite3 works fine
     pass
 
 # ---------- Your Original Imports ----------
@@ -26,27 +23,31 @@ from llama_index.llms.groq import Groq
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
 # ---------- STREAMLIT CLOUD API KEY CONFIGURATION ----------
-# Streamlit Secrets-la irukra GROQ_API_KEY-a env variable-la set panrom.
+load_dotenv()
+
+# Streamlit Secrets configuration fallback
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+
+# OpenAI requirement check bypass logic for LlamaIndex standard initialization
+os.environ["OPENAI_API_KEY"] = GROQ_API_KEY or "not-needed-using-groq"
+
 # ---------- Configuration & Setup ----------
-load_dotenv()
 st.set_page_config(page_title="Python Book Chatbot", page_icon="✨")
 st.title("📚 Python Book Chatbot (RAG)")
 
 BOOKS_DIR, CHROMA_DIR, COLLECTION_NAME = "books", "chroma_db", "python_books"
 
-# Local .env-la irundho illa mela st.secrets-la set panna env-lerundho key-a edukrom
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-
-if not GROQ_API_KEY:
-    st.error("⚠️ GROQ_API_KEY kidaikala. Streamlit Secrets-la config pannunga.")
+if not GROQ_API_KEY or GROQ_API_KEY.startswith("your-"):
+    st.error("⚠️ GROQ_API_KEY kidaikala. Streamlit Secrets (illa .env)-la config pannunga.")
     st.stop()
 
 # ---------- Core RAG Initialization ----------
 @st.cache_resource(show_spinner=False)
 def load_index():
+    # Setting explicitly embedding model and groq model inside Settings object
     Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
     Settings.llm = Groq(model="llama-3.1-8b-instant", api_key=GROQ_API_KEY, temperature=0.3, max_tokens=2048)
     
@@ -55,7 +56,10 @@ def load_index():
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     
     if chroma_collection.count() > 0:
-        return VectorStoreIndex.from_vector_store(vector_store=vector_store, storage_context=StorageContext.from_defaults(vector_store=vector_store))
+        return VectorStoreIndex.from_vector_store(
+            vector_store=vector_store, 
+            storage_context=StorageContext.from_defaults(vector_store=vector_store)
+        )
         
     if not os.path.exists(BOOKS_DIR) or not os.listdir(BOOKS_DIR):
         return None
@@ -76,11 +80,13 @@ if index is None:
 
 # ---------- Chat Session & Engine Management ----------
 def make_new_chat_engine():
+    # passing settings explicit reference to prevent fallback to openai token
     return index.as_chat_engine(
         chat_mode="context",
         similarity_top_k=4,
+        llm=Settings.llm,
         memory=ChatMemoryBuffer.from_defaults(token_limit=250),
-        system_prompt="Talk like a warm friend. Base your answer exactly on the book text/code context. Be concise and don't skip details if multiple sections apply."
+        system_prompt="Talk like a warm friend. Base your answer exactly on the book text/code context. Be concise."
     )
 
 if "chats" not in st.session_state:
