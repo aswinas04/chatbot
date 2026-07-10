@@ -25,16 +25,23 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.groq import Groq
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
+# ---------- STREAMLIT CLOUD API KEY CONFIGURATION ----------
+# Streamlit Secrets-la irukra GROQ_API_KEY-a env variable-la set panrom.
+if "GROQ_API_KEY" in st.secrets:
+    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+
 # ---------- Configuration & Setup ----------
 load_dotenv()
 st.set_page_config(page_title="Python Book Chatbot", page_icon="✨")
 st.title("📚 Python Book Chatbot (RAG)")
 
 BOOKS_DIR, CHROMA_DIR, COLLECTION_NAME = "books", "chroma_db", "python_books"
+
+# Local .env-la irundho illa mela st.secrets-la set panna env-lerundho key-a edukrom
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 if not GROQ_API_KEY:
-    st.error("⚠️ GROQ_API_KEY kidaikala. `.env` file-la config pannunga.")
+    st.error("⚠️ GROQ_API_KEY kidaikala. Streamlit Secrets-la config pannunga.")
     st.stop()
 
 # ---------- Core RAG Initialization ----------
