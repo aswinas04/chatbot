@@ -4,5 +4,6 @@ llama-index-vector-stores-chroma
 llama-index-llms-groq
 chromadb
 pysqlite3-binary
-python-dotenv
+python-dotenvstreamlit
 llama-index-embeddings-huggingface
+pysqlite3-binary
