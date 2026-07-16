@@ -25,14 +25,13 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 # ---------- STREAMLIT CLOUD API KEY CONFIGURATION ----------
 load_dotenv()
 
-# Streamlit Secrets configuration fallback
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
-# OpenAI requirement check bypass logic for LlamaIndex standard initialization
-os.environ["OPENAI_API_KEY"] = GROQ_API_KEY or "not-needed-using-groq"
+# OpenAI requirement check-ah complete-ah bypass panna dummy string
+os.environ["OPENAI_API_KEY"] = "not-needed"
 
 # ---------- Configuration & Setup ----------
 st.set_page_config(page_title="Python Book Chatbot", page_icon="✨")
@@ -40,17 +39,17 @@ st.title("📚 Python Book Chatbot (RAG)")
 
 BOOKS_DIR, CHROMA_DIR, COLLECTION_NAME = "books", "chroma_db", "python_books"
 
-if not GROQ_API_KEY or GROQ_API_KEY.startswith("your-"):
-    st.error("⚠️ GROQ_API_KEY kidaikala. Streamlit Secrets (illa .env)-la config pannunga.")
+if not GROQ_API_KEY:
+    st.error("⚠️ GROQ_API_KEY kidaikala. Secrets-la setup pannunga.")
     st.stop()
+
+# Global config variables inject panrom
+Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
+Settings.llm = Groq(model="llama-3.1-8b-instant", api_key=GROQ_API_KEY, temperature=0.3, max_tokens=2048)
 
 # ---------- Core RAG Initialization ----------
 @st.cache_resource(show_spinner=False)
 def load_index():
-    # Setting explicitly embedding model and groq model inside Settings object
-    Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
-    Settings.llm = Groq(model="llama-3.1-8b-instant", api_key=GROQ_API_KEY, temperature=0.3, max_tokens=2048)
-    
     chroma_client = chromadb.PersistentClient(path=CHROMA_DIR)
     chroma_collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -80,13 +79,13 @@ if index is None:
 
 # ---------- Chat Session & Engine Management ----------
 def make_new_chat_engine():
-    # passing settings explicit reference to prevent fallback to openai token
+    # Inga explicit-ah Groq LLM configuration parameters force panrom
     return index.as_chat_engine(
         chat_mode="context",
-        similarity_top_k=4,
         llm=Settings.llm,
+        similarity_top_k=4,
         memory=ChatMemoryBuffer.from_defaults(token_limit=250),
-        system_prompt="Talk like a warm friend. Base your answer exactly on the book text/code context. Be concise."
+        system_prompt="Talk like a warm friend. Base your answer exactly on the book text/code context. Be concise and don't skip details if multiple sections apply."
     )
 
 if "chats" not in st.session_state:
